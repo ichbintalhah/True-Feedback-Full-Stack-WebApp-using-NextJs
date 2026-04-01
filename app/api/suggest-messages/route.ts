@@ -1,17 +1,5 @@
-const SUGGESTION_PROMPT_TEMPLATE = `You are an assistant that creates short anonymous message ideas for a public profile inbox.
-
-Rules:
-- Generate exactly {{count}} suggestions.
-- Each suggestion must be a single sentence.
-- Keep each suggestion friendly, respectful, and under 120 characters.
-- Avoid hate, harassment, sexual content, and personal data requests.
-- Do not number the suggestions.
-- Output strictly as a JSON array of strings.
-
-Context:
-- Topic: {{topic}}
-- Tone: {{tone}}
-`;
+const SUGGESTION_PROMPT_TEMPLATE =
+  "Create exactly {{count}} open-ended and engaging questions for an anonymous social messaging platform. Focus on topic '{{topic}}' and use a '{{tone}}' tone. Avoid personal or sensitive topics and keep the questions suitable for a diverse audience. Return ONLY one plain text string where each question is separated by '||' with no numbering, no bullets, and no extra commentary. Example format: What's a hobby you've recently started? || If you could have dinner with any historical figure, who would it be? || What's a simple thing that makes you happy?";
 
 function buildPrompt(topic: string, tone: string, count: number): string {
   return SUGGESTION_PROMPT_TEMPLATE.replace("{{topic}}", topic)
@@ -26,59 +14,19 @@ function parseSuggestions(rawText: string): string[] {
     .replace(/\s*```$/, "")
     .trim();
 
-  const toStringArray = (value: unknown): string[] => {
-    if (!Array.isArray(value)) {
-      return [];
-    }
+  const fromDelimiters = cleanedText
+    .split("||")
+    .map((item) => item.trim())
+    .filter(Boolean);
 
-    return value
-      .map((item) => (typeof item === "string" ? item.trim() : ""))
-      .filter((item) => item.length > 0);
-  };
-
-  try {
-    const parsed = JSON.parse(cleanedText);
-    const directArray = toStringArray(parsed);
-    if (directArray.length > 0) {
-      return directArray;
-    }
-
-    if (parsed && typeof parsed === "object") {
-      const fromSuggestions = toStringArray(
-        (parsed as { suggestions?: unknown }).suggestions,
-      );
-      if (fromSuggestions.length > 0) {
-        return fromSuggestions;
-      }
-    }
-  } catch {
-    // Fall back to line parsing if model did not return strict JSON.
-  }
-
-  const firstBracket = cleanedText.indexOf("[");
-  const lastBracket = cleanedText.lastIndexOf("]");
-  if (firstBracket !== -1 && lastBracket > firstBracket) {
-    try {
-      const bracketArray = JSON.parse(
-        cleanedText.slice(firstBracket, lastBracket + 1),
-      );
-      const extracted = toStringArray(bracketArray);
-      if (extracted.length > 0) {
-        return extracted;
-      }
-    } catch {
-      // Ignore and use text fallback.
-    }
+  if (fromDelimiters.length > 0) {
+    return fromDelimiters;
   }
 
   return cleanedText
     .split("\n")
     .map((line) => line.replace(/^[-*\d.\s]+/, "").trim())
-    .filter(
-      (line) => line !== "[" && line !== "]" && line !== "," && line.length > 0,
-    )
-    .map((line) => line.replace(/^"|",?$/g, "").trim())
-    .filter(Boolean);
+    .filter((line) => line.length > 0);
 }
 
 const GEMINI_MODEL_CANDIDATES = [
@@ -136,7 +84,7 @@ export async function POST(request: Request) {
             generationConfig: {
               temperature: 0.9,
               maxOutputTokens: 300,
-              responseMimeType: "application/json",
+              responseMimeType: "text/plain",
             },
           }),
         },
