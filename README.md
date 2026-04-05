@@ -16,6 +16,17 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Environment Variables
+
+Add these values in your `.env.local` file:
+
+- `MONGODB_URI` - MongoDB connection string
+- `NEXTAUTH_SECRET` - NextAuth secret key
+- `GMAIL_USER` - Gmail address used to send password recovery OTP emails
+- `GMAIL_APP_PASSWORD` - Gmail App Password generated for that account
+
+Password recovery API routes use Gmail SMTP through Nodemailer and send a 6-digit OTP that expires in 10 minutes.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

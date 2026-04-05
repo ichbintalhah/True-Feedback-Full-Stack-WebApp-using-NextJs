@@ -91,6 +91,15 @@ const SignInPage = () => {
               )}
             />
 
+            <div className="text-right text-sm">
+              <Link
+                href="/forgot-password"
+                className="text-blue-600 hover:text-blue-800"
+              >
+                Forgot password?
+              </Link>
+            </div>
+
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? "Signing in..." : "Sign In"}
             </Button>

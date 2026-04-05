@@ -23,6 +23,9 @@ export interface User extends Document {
   password: String;
   verifyCode: String;
   verifyCodeExpiry: Date;
+  passwordResetOtp?: String | null;
+  passwordResetOtpExpiry?: Date | null;
+  passwordResetOtpVerified?: Boolean;
   isVerified: Boolean;
   isAcceptingMessages: Boolean;
   messages: Message[];
@@ -53,6 +56,18 @@ const UserSchema: Schema<User> = new Schema({
     type: Date,
     required: [true, "Verification code expiry is required"],
   },
+  passwordResetOtp: {
+    type: String,
+    default: null,
+  },
+  passwordResetOtpExpiry: {
+    type: Date,
+    default: null,
+  },
+  passwordResetOtpVerified: {
+    type: Boolean,
+    default: false,
+  },
   isVerified: {
     type: Boolean,
     default: false,
@@ -63,6 +78,10 @@ const UserSchema: Schema<User> = new Schema({
   },
   messages: [MessageSchema],
 });
+
+if (process.env.NODE_ENV === "development" && mongoose.models.User) {
+  delete mongoose.models.User;
+}
 
 const UserModel =
   (mongoose.models.User as mongoose.Model<User>) ||
