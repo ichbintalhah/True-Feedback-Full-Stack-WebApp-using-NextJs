@@ -18,24 +18,30 @@ export async function POST(request: Request) {
     }
     const isCodeValid = user.verifyCode === code;
     const isCodeNotExpired = new Date(user.verifyCodeExpiry) > new Date();
-    if(isCodeValid && isCodeNotExpired){
-        await user.isVerified = true
-        await user.save()
-        return Response.json({
-            succes: true,
-            message: "Account Verified Successfully"
-        }, { status: 200 })
-    }   
-    else if (!isCodeNotExpired){
-        return Response.json({
-            success: false,
-            message: "Verification Code Has been Expired, Please Sign Up again to get the code"
-        }, { status: 400 })
-    }else{
-        return Response.json({
-            success: false,
-            message: "Verification Code is Wrong"
-        })
+    if (isCodeValid && isCodeNotExpired) {
+      user.isVerified = true;
+      await user.save();
+      return Response.json(
+        {
+          success: true,
+          message: "Account Verified Successfully",
+        },
+        { status: 200 },
+      );
+    } else if (!isCodeNotExpired) {
+      return Response.json(
+        {
+          success: false,
+          message:
+            "Verification Code Has been Expired, Please Sign Up again to get the code",
+        },
+        { status: 400 },
+      );
+    } else {
+      return Response.json({
+        success: false,
+        message: "Verification Code is Wrong",
+      });
     }
   } catch (error) {
     console.error("Error verifying username", error);

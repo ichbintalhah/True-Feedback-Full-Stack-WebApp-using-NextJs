@@ -2,15 +2,14 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/options";
 import dbConnect from "@/app/lib/dbConnect";
 import UserModel from "@/app/model/user";
-import { User } from "next-auth";
 
 export async function POST(request: Request) {
   await dbConnect();
 
   const session = await getServerSession(authOptions);
-  const user: User = session?.user as User;
+  const user = session?.user as { _id?: string } | undefined;
 
-  if (!session || !session.user) {
+  if (!session || !user?._id) {
     return Response.json(
       {
         success: false,
@@ -27,7 +26,7 @@ export async function POST(request: Request) {
     const updatedUser = await UserModel.findByIdAndUpdate(
       userId,
       { isAcceptingMessages: acceptMessages },
-      { new: true },
+      { returnDocument: "after" },
     );
 
     if (!updatedUser) {
@@ -61,9 +60,9 @@ export async function POST(request: Request) {
 export async function GET() {
   await dbConnect();
   const session = await getServerSession(authOptions);
-  const user: User = session?.user as User;
+  const user = session?.user as { _id?: string } | undefined;
 
-  if (!session || !session.user) {
+  if (!session || !user?._id) {
     return Response.json(
       {
         success: false,

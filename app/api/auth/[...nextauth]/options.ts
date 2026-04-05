@@ -52,10 +52,16 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token._id = user._id?.toString();
-        token.isVerified = user.isVerified;
-        token.isAcceptingMessages = user.isAcceptingMessages;
-        token.username = user.username;
+        const dbUser = user as {
+          _id?: { toString: () => string } | string;
+          isVerified?: boolean;
+          isAcceptingMessages?: boolean;
+          username?: string;
+        };
+        token._id = dbUser._id ? dbUser._id.toString() : undefined;
+        token.isVerified = dbUser.isVerified;
+        token.isAcceptingMessages = dbUser.isAcceptingMessages;
+        token.username = dbUser.username;
       }
       return token;
     },
