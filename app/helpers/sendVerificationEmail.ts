@@ -1,5 +1,4 @@
-import { resend } from "../lib/resend";
-import VerificationEmail from "@/emails/VerificationEmail";
+import nodemailer from "nodemailer";
 import { ApiResponse } from "../types/ApiResponse";
 
 export async function sendVerificationEmail(
@@ -8,16 +7,43 @@ export async function sendVerificationEmail(
   verifyCode: string,
 ): Promise<ApiResponse> {
   try {
-    const senderEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
-    await resend.emails.send({
-      from: senderEmail,
-      to: email,
-      subject: "Your Verification Code",
-      react: VerificationEmail({
-        username,
-        otp: verifyCode,
-      }),
+    const gmailUser = process.env.GMAIL_USER;
+    const gmailAppPassword = process.env.GMAIL_APP_PASSWORD;
+
+    if (!gmailUser || !gmailAppPassword) {
+      throw new Error(
+        "Missing GMAIL_USER or GMAIL_APP_PASSWORD in environment",
+      );
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: gmailUser,
+        pass: gmailAppPassword,
+      },
     });
+
+    await transporter.sendMail({
+      from: `TrueFeedback <${gmailUser}>`,
+      to: email,
+      subject: "Your TrueFeedback Verification Code",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 16px; color: #0f172a;">
+          <h2 style="margin-bottom: 8px;">Welcome to TrueFeedback</h2>
+          <p style="margin: 0 0 12px;">Hi ${username},</p>
+          <p style="margin: 0 0 16px;">Thank you for registering. Please use the 6-digit code below to verify your email:</p>
+          <div style="font-size: 28px; letter-spacing: 6px; font-weight: 700; margin: 0 0 16px; color: #1d4ed8;">
+            ${verifyCode}
+          </div>
+          <p style="margin: 0 0 8px;">This code expires in 1 hour.</p>
+          <p style="margin: 0; color: #475569; font-size: 14px;">
+            If you did not create this account, you can safely ignore this email.
+          </p>
+        </div>
+      `,
+    });
+
     return { success: true, message: "Verification email sent successfully" };
   } catch (emailError) {
     console.error("Error sending verification email:", emailError);
